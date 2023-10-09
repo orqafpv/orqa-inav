@@ -173,8 +173,8 @@ typedef struct statistic_s {
     int16_t max_current;
     int32_t max_power;
     int16_t min_rssi;
-    int16_t min_lq; // for CRSF
-    int16_t min_rssi_dbm; // for CRSF
+    int16_t min_lq;
+    int16_t min_rssi_dbm;
     int32_t max_altitude;
     uint32_t max_distance;
 } statistic_t;
@@ -675,26 +675,20 @@ static uint16_t osdConvertRSSI(void)
     return constrain(getRSSI() * 100 / RSSI_MAX_VALUE, 0, 99);
 }
 
-static uint16_t osdGetCrsfLQ(void)
+static uint16_t osdGetLQ(void)
 {
     int16_t statsLQ = rxLinkStatistics.uplinkLQ;
     int16_t scaledLQ = scaleRange(constrain(statsLQ, 0, 100), 0, 100, 170, 300);
     int16_t displayedLQ = 0;
-    switch (osdConfig()->crsf_lq_format) {
-        case OSD_CRSF_LQ_TYPE1:
-            displayedLQ = statsLQ;
-            break;
-        case OSD_CRSF_LQ_TYPE2:
-            displayedLQ = statsLQ;
-            break;
-        case OSD_CRSF_LQ_TYPE3:
-            displayedLQ = rxLinkStatistics.rfMode >= 2 ? scaledLQ : statsLQ;
-            break;
+    if(rxConfig()->serialrx_provider == SERIALRX_CRSF && osdConfig()->crsf_lq_format == OSD_CRSF_LQ_TYPE3) {
+        displayedLQ = rxLinkStatistics.rfMode >= 2 ? scaledLQ : statsLQ;
+    } else {
+        displayedLQ = statsLQ;
     }
     return displayedLQ;
 }
 
-static int16_t osdGetCrsfdBm(void)
+static int16_t osdGetdBm(void)
 {
     return rxLinkStatistics.uplinkRSSI;
 }
@@ -2294,8 +2288,7 @@ static bool osdDrawSingleElement(uint8_t item)
             return true;
         }
 
-#if defined(USE_SERIALRX_CRSF)
-    case OSD_CRSF_RSSI_DBM:
+    case OSD_RSSI_DBM:
         {
             int16_t rssi = rxLinkStatistics.uplinkRSSI;
             buff[0] = (rxLinkStatistics.activeAntenna == 0) ? SYM_RSSI : SYM_2RSS; // Separate symbols for each antenna
@@ -2311,34 +2304,45 @@ static bool osdDrawSingleElement(uint8_t item)
             }
             break;
         }
-    case OSD_CRSF_LQ:
+
+    case OSD_LQ:
         {
             buff[0] = SYM_LQ;
             int16_t statsLQ = rxLinkStatistics.uplinkLQ;
             int16_t scaledLQ = scaleRange(constrain(statsLQ, 0, 100), 0, 100, 170, 300);
-            switch (osdConfig()->crsf_lq_format) {
-                case OSD_CRSF_LQ_TYPE1:
-                    if (!failsafeIsReceivingRxData()) {
-                        tfp_sprintf(buff+1, "%3d", 0);
-                    } else {
-                        tfp_sprintf(buff+1, "%3d", rxLinkStatistics.uplinkLQ);
-                    }
-                    break;
-                case OSD_CRSF_LQ_TYPE2:
-                    if (!failsafeIsReceivingRxData()) {
-                        tfp_sprintf(buff+1, "%s:%3d", " ", 0);
-                    } else {
-                        tfp_sprintf(buff+1, "%d:%3d", rxLinkStatistics.rfMode, rxLinkStatistics.uplinkLQ);
-                    }
-                    break;
-                case OSD_CRSF_LQ_TYPE3:
-                    if (!failsafeIsReceivingRxData()) {
-                        tfp_sprintf(buff+1, "%3d", 0);
-                    } else {
-                        tfp_sprintf(buff+1, "%3d", rxLinkStatistics.rfMode >= 2 ? scaledLQ : rxLinkStatistics.uplinkLQ);
-                    }
-                    break;
+            if(rxConfig()->serialrx_provider == SERIALRX_CRSF) {
+                switch (osdConfig()->crsf_lq_format) {
+                    case OSD_CRSF_LQ_TYPE1:
+                        if (!failsafeIsReceivingRxData()) {
+                            tfp_sprintf(buff+1, "%3d", 0);
+                        } else {
+                            tfp_sprintf(buff+1, "%3d", rxLinkStatistics.uplinkLQ);
+                        }
+                        break;
+                    case OSD_CRSF_LQ_TYPE2:
+                        if (!failsafeIsReceivingRxData()) {
+                            tfp_sprintf(buff+1, "%s:%3d", " ", 0);
+                        } else {
+                            tfp_sprintf(buff+1, "%d:%3d", rxLinkStatistics.rfMode, rxLinkStatistics.uplinkLQ);
+                        }
+                        break;
+                    case OSD_CRSF_LQ_TYPE3:
+                        if (!failsafeIsReceivingRxData()) {
+                            tfp_sprintf(buff+1, "%3d", 0);
+                        } else {
+                            tfp_sprintf(buff+1, "%3d", rxLinkStatistics.rfMode >= 2 ? scaledLQ : rxLinkStatistics.uplinkLQ);
+                        }
+                        break;
+                }
             }
+            else {
+                if (!failsafeIsReceivingRxData()) {
+                    tfp_sprintf(buff+1, "%3d", 0);
+                } else {
+                    tfp_sprintf(buff+1, "%3d", rxLinkStatistics.uplinkLQ);
+                }
+            }
+
             if (!failsafeIsReceivingRxData()) {
                 TEXT_ATTRIBUTES_ADD_BLINK(elemAttr);
             } else if (rxLinkStatistics.uplinkLQ < osdConfig()->link_quality_alarm) {
@@ -2347,7 +2351,7 @@ static bool osdDrawSingleElement(uint8_t item)
             break;
         }
 
-    case OSD_CRSF_SNR_DB:
+    case OSD_SNR_DB:
         {
             static pt1Filter_t snrFilterState;
             static timeMs_t snrUpdated = 0;
@@ -2375,7 +2379,7 @@ static bool osdDrawSingleElement(uint8_t item)
             break;
         }
 
-    case OSD_CRSF_TX_POWER:
+    case OSD_TX_POWER:
         {
             if (!failsafeIsReceivingRxData())
                 tfp_sprintf(buff, "%s%c", "    ", SYM_BLANK);
@@ -2383,7 +2387,6 @@ static bool osdDrawSingleElement(uint8_t item)
                 tfp_sprintf(buff, "%4d%c", rxLinkStatistics.uplinkTXPower, SYM_MW);
             break;
         }
-#endif
 
     case OSD_CROSSHAIRS: // Hud is a sub-element of the crosshair
 
@@ -3684,14 +3687,14 @@ PG_RESET_TEMPLATE(osdConfig_t, osdConfig,
     .baro_temp_alarm_min = SETTING_OSD_BARO_TEMP_ALARM_MIN_DEFAULT,
     .baro_temp_alarm_max = SETTING_OSD_BARO_TEMP_ALARM_MAX_DEFAULT,
 #endif
-#ifdef USE_SERIALRX_CRSF
     .snr_alarm = SETTING_OSD_SNR_ALARM_DEFAULT,
+#ifdef USE_SERIALRX_CRSF
     .crsf_lq_format = SETTING_OSD_CRSF_LQ_FORMAT_DEFAULT,
+#endif
     .link_quality_alarm = SETTING_OSD_LINK_QUALITY_ALARM_DEFAULT,
     .rssi_dbm_alarm = SETTING_OSD_RSSI_DBM_ALARM_DEFAULT,
     .rssi_dbm_max = SETTING_OSD_RSSI_DBM_MAX_DEFAULT,
     .rssi_dbm_min = SETTING_OSD_RSSI_DBM_MIN_DEFAULT,
-#endif
 #ifdef USE_TEMPERATURE_SENSOR
     .temp_label_align = SETTING_OSD_TEMP_LABEL_ALIGN_DEFAULT,
 #endif
@@ -3824,12 +3827,10 @@ void pgResetFn_osdLayoutsConfig(osdLayoutsConfig_t *osdLayoutsConfig)
     osdLayoutsConfig->item_pos[0][OSD_PILOT_NAME] = OSD_POS(20, 3);
     osdLayoutsConfig->item_pos[0][OSD_VTX_CHANNEL] = OSD_POS(8, 6);
 
-#ifdef USE_SERIALRX_CRSF
-    osdLayoutsConfig->item_pos[0][OSD_CRSF_RSSI_DBM] = OSD_POS(23, 12);
-    osdLayoutsConfig->item_pos[0][OSD_CRSF_LQ] = OSD_POS(23, 11);
-    osdLayoutsConfig->item_pos[0][OSD_CRSF_SNR_DB] = OSD_POS(24, 9);
-    osdLayoutsConfig->item_pos[0][OSD_CRSF_TX_POWER] = OSD_POS(24, 10);
-#endif
+    osdLayoutsConfig->item_pos[0][OSD_RSSI_DBM] = OSD_POS(23, 12);
+    osdLayoutsConfig->item_pos[0][OSD_LQ] = OSD_POS(23, 11);
+    osdLayoutsConfig->item_pos[0][OSD_SNR_DB] = OSD_POS(24, 9);
+    osdLayoutsConfig->item_pos[0][OSD_TX_POWER] = OSD_POS(24, 10);
 
     osdLayoutsConfig->item_pos[0][OSD_ONTIME] = OSD_POS(23, 8);
     osdLayoutsConfig->item_pos[0][OSD_FLYTIME] = OSD_POS(23, 9);
@@ -4156,14 +4157,14 @@ static void osdUpdateStats(void)
     if (stats.min_rssi > value)
         stats.min_rssi = value;
 
-    value = osdGetCrsfLQ();
+    value = osdGetLQ();
     if (stats.min_lq > value)
         stats.min_lq = value;
 
     if (!failsafeIsReceivingRxData())
         stats.min_lq = 0;
 
-    value = osdGetCrsfdBm();
+    value = osdGetdBm();
     if (stats.min_rssi_dbm > value)
         stats.min_rssi_dbm = value;
 
@@ -4233,6 +4234,7 @@ static void osdShowStats(bool isSinglePageStatsCompatible, uint8_t page)
 
         switch (rxConfig()->serialrx_provider) {
             case SERIALRX_CRSF:
+            case SERIALRX_GHST:
                 if (isSinglePageStatsCompatible) {
                     displayWrite(osdDisplayPort, statNameX, top, "MIN RSSI %/DBM   :");
                     itoa(stats.min_rssi, buff, 10);
