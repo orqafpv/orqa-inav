@@ -300,7 +300,10 @@ static bool ghstProcessFrame(const rxRuntimeConfig_t *rxRuntimeConfig)
                 case GHST_UL_RC_CHANS_HS4_RSSI: {
                     const ghstPayloadPulsesRSSI_t* const rssiFrame = (ghstPayloadPulsesRSSI_t*)&ghstValidatedFrame.frame.payload;
                     lqTrackerSet(rxRuntimeConfig->lqTracker, scaleRange(constrain(rssiFrame->lq, 0, 100), 0, 100, 0, RSSI_MAX_VALUE));
-
+                    rxLinkStatistics.uplinkRSSI = -1* rssiFrame->rssi;
+                    rxLinkStatistics.uplinkLQ = rssiFrame->lq;
+                    rxLinkStatistics.uplinkSNR = 0;                         // not yet transmitted
+                    rxLinkStatistics.activeAntenna = rssiFrame->rxNum;
                     break;
                 }
 
