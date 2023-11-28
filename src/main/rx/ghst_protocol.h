@@ -122,5 +122,6 @@ typedef struct ghstPayloadPulsesRSSI_s {
     unsigned int lq: 8;                 // 0-100
     unsigned int rssi: 8;               // 0 - 128 sign inverted, dBm
     unsigned int rfProtocol: 8;         
-    signed int txPwrdBm: 8;             // tx power in dBm, use lookup table to map to published mW values
+    unsigned int rxNum : 2;				// Rx on which packet was received (0..n)
+	unsigned int txPwrdBm : 6;			// tx power in dBm, use lookup table to map to published mW values
 } __attribute__ ((__packed__)) ghstPayloadPulsesRSSI_t;
