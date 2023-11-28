@@ -130,10 +130,10 @@ Here are the OSD Elements provided by INAV.
 | 106 | OSD_ESC_RPM                                      | 2.3.0  |
 | 107 | OSD_ESC_TEMPERATURE                              | 2.5.0  |
 | 108 | OSD_AZIMUTH                                      | 2.6.0  |
-| 109 | OSD_CRSF_RSSI_DBM                                | 2.6.0  |
-| 110 | OSD_CRSF_LQ                                      | 2.6.0  |
-| 111 | OSD_CRSF_SNR_DB                                  | 2.6.0  |
-| 112 | OSD_CRSF_TX_POWER                                | 2.6.0  |
+| 109 | OSD_RSSI_DBM								     | 2.6.0  |
+| 110 | OSD_LQ				    					     | 2.6.0  |
+| 111 | OSD_SNR_DB			    					     | 2.6.0  |
+| 112 | OSD_TX_POWER		    						 | 2.6.0  |
 | 113 | OSD_GVAR_0                                       | 2.6.0  |
 | 114 | OSD_GVAR_1                                       | 2.6.0  |
 | 115 | OSD_GVAR_2                                       | 2.6.0  |
