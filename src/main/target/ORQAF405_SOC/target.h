@@ -32,28 +32,13 @@
 #define USE_SPI
 #define USE_SPI_DEVICE_1
 
-#define USE_IMU_MPU6000
-#define IMU_MPU6000_ALIGN       CW180_DEG
-#define MPU6000_CS_PIN          PA4
-#define MPU6000_SPI_BUS         BUS_SPI1
+#define USE_IMU_BMI270
+#define IMU_BMI270_ALIGN       CW180_DEG
+#define BMI270_CS_PIN          PA4
+#define BMI270_SPI_BUS         BUS_SPI1
 #define SPI1_SCK_PIN            PA5
 #define SPI1_MISO_PIN   	    PA6
 #define SPI1_MOSI_PIN   	    PA7
-
-// *************** W25Q128 flash ********************
-#define USE_FLASHFS
-#define USE_FLASH_M25P16
-#define M25P16_SPI_BUS          BUS_SPI3
-#define M25P16_CS_PIN           PB3
-// *************** OSD *****************************
-#define USE_SPI_DEVICE_2
-#define SPI2_SCK_PIN            PB13
-#define SPI2_MISO_PIN   	      PB14
-#define SPI2_MOSI_PIN   	      PB15
-
-#define USE_MAX7456
-#define MAX7456_SPI_BUS         BUS_SPI2
-#define MAX7456_CS_PIN          PB12
 
 // *************** UART *****************************
 #define USE_VCP
@@ -85,7 +70,7 @@
 // *************** I2C ****************************
 #define USE_I2C
 #define USE_I2C_DEVICE_1
-#define I2C1_SCL                PB6
+#define I2C1_SCL                PB8
 #define I2C1_SDA                PB7
 #define DEFAULT_I2C_BUS         BUS_I2C1
 
