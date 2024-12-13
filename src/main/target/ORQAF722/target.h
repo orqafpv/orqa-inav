@@ -95,7 +95,7 @@
 
 #define DEFAULT_RX_TYPE         RX_TYPE_SERIAL
 #define SERIALRX_PROVIDER       SERIALRX_GHST
-#define SERIALRX_UART           SERIAL_PORT_USART1
+#define SERIALRX_UART           SERIAL_PORT_USART4
 
 // *************** I2C ****************************
 #define USE_I2C
